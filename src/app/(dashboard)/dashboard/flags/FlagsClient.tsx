@@ -1,7 +1,13 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { createFlag, toggleFlag, archiveFlag, unarchiveFlag } from "@/app/(dashboard)/dashboard/flags/actions";
+import { Field } from "@/components/Field";
+import {
+  createFlag,
+  toggleFlag,
+  archiveFlag,
+  unarchiveFlag,
+} from "@/app/(dashboard)/dashboard/flags/actions";
 
 type FlagType = "BOOLEAN" | "STRING" | "NUMBER" | "JSON";
 
@@ -42,7 +48,9 @@ export default function FlagsClient({ flags, projectId, environmentId }: Props) 
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">Feature Flags</h1>
-          <p className="text-sm text-zinc-500">{flags.filter((f) => !f.archived).length} active flags</p>
+          <p className="text-sm text-zinc-500">
+            {flags.filter((f) => !f.archived).length} active flags
+          </p>
         </div>
         <div className="flex items-center gap-3">
           <label className="flex cursor-pointer items-center gap-2 text-sm text-zinc-500">
@@ -136,12 +144,7 @@ export default function FlagsClient({ flags, projectId, environmentId }: Props) 
       )}
 
       {/* Create flag modal */}
-      {showCreate && (
-        <CreateFlagModal
-          projectId={projectId}
-          onClose={() => setShowCreate(false)}
-        />
-      )}
+      {showCreate && <CreateFlagModal projectId={projectId} onClose={() => setShowCreate(false)} />}
     </div>
   );
 }
@@ -172,7 +175,13 @@ function CreateFlagModal({ projectId, onClose }: { projectId: string; onClose: (
         <h2 className="mb-4 text-base font-semibold text-zinc-900 dark:text-zinc-50">New flag</h2>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <Field label="Key" name="key" placeholder="my-feature-flag" required hint="Lowercase, alphanumeric, _ or -" />
+          <Field
+            label="Key"
+            name="key"
+            placeholder="my-feature-flag"
+            required
+            hint="Lowercase, alphanumeric, _ or -"
+          />
           <Field label="Name" name="name" placeholder="My Feature Flag" required />
           <Field label="Description" name="description" placeholder="Optional" />
 
@@ -214,29 +223,3 @@ function CreateFlagModal({ projectId, onClose }: { projectId: string; onClose: (
   );
 }
 
-function Field({
-  label,
-  name,
-  placeholder,
-  required,
-  hint,
-}: {
-  label: string;
-  name: string;
-  placeholder?: string;
-  required?: boolean;
-  hint?: string;
-}) {
-  return (
-    <div className="flex flex-col gap-1">
-      <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{label}</label>
-      <input
-        name={name}
-        placeholder={placeholder}
-        required={required}
-        className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none ring-zinc-900 transition focus:ring-2 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50 dark:ring-zinc-50"
-      />
-      {hint && <p className="text-xs text-zinc-400">{hint}</p>}
-    </div>
-  );
-}
