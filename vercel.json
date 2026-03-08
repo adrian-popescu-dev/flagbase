@@ -1,0 +1,26 @@
+{
+  "buildCommand": "npx prisma generate && next build",
+  "framework": "nextjs",
+  "env": {
+    "DATABASE_URL": {
+      "description": "Neon pooled connection string (postgresql://...)",
+      "required": true
+    },
+    "DIRECT_URL": {
+      "description": "Neon direct connection string for Prisma migrations",
+      "required": true
+    },
+    "REDIS_URL": {
+      "description": "Upstash Redis URL (rediss://...)",
+      "required": true
+    },
+    "AUTH_SECRET": {
+      "description": "Random secret for NextAuth — generate with: openssl rand -base64 32",
+      "required": true
+    },
+    "AUTH_URL": {
+      "description": "The public URL of your deployment, e.g. https://your-app.vercel.app",
+      "required": true
+    }
+  }
+}
