@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { invalidateFlagCache } from "@/lib/redis";
 
 const updateFlagSchema = z.object({
   name: z.string().min(1).optional(),
@@ -54,6 +55,8 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     data: parsed.data,
   });
 
+  await invalidateFlagCache(existing.projectId, existing.key);
+
   return NextResponse.json(flag);
 }
 
@@ -68,6 +71,7 @@ export async function DELETE(_req: NextRequest, { params }: RouteParams) {
   if (!existing) return NextResponse.json({ error: "Flag not found" }, { status: 404 });
 
   await prisma.flag.delete({ where: { id } });
+  await invalidateFlagCache(existing.projectId, existing.key);
 
   return new NextResponse(null, { status: 204 });
 }

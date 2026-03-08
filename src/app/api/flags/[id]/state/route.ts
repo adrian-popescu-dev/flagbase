@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { invalidateFlagCache } from "@/lib/redis";
 
 const upsertStateSchema = z.object({
   environmentId: z.string().min(1),
@@ -35,6 +36,8 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     create: { flagId, environmentId, ...rest },
     update: rest,
   });
+
+  await invalidateFlagCache(flag.projectId, flag.key);
 
   return NextResponse.json(state);
 }
