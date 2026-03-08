@@ -1,0 +1,268 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Auth (NextAuth v5) ───────────────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          Role      @default(VIEWER)
+  createdAt     DateTime  @default(now())
+
+  accounts  Account[]
+  sessions  Session[]
+  auditLogs AuditLog[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─── Projects & Environments ──────────────────────────────────────────────────
+
+model Project {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  environments Environment[]
+  flags        Flag[]
+  experiments  Experiment[]
+  apiKeys      ApiKey[]
+  auditLogs    AuditLog[]
+}
+
+model Environment {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String
+  projectId String
+  createdAt DateTime @default(now())
+
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  flagStates  FlagState[]
+  apiKeys     ApiKey[]
+
+  @@unique([projectId, slug])
+}
+
+// ─── API Keys ─────────────────────────────────────────────────────────────────
+
+model ApiKey {
+  id            String      @id @default(cuid())
+  name          String
+  keyHash       String      @unique
+  keyPrefix     String
+  projectId     String
+  environmentId String
+  createdAt     DateTime    @default(now())
+  lastUsedAt    DateTime?
+  expiresAt     DateTime?
+
+  project     Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  environment Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+}
+
+// ─── Feature Flags ────────────────────────────────────────────────────────────
+
+model Flag {
+  id          String   @id @default(cuid())
+  key         String
+  name        String
+  description String?
+  type        FlagType @default(BOOLEAN)
+  projectId   String
+  archived    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  project Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  states  FlagState[]
+  rules   FlagRule[]
+
+  @@unique([projectId, key])
+}
+
+// Per-environment state of a flag (enabled/disabled + rollout %)
+model FlagState {
+  id            String   @id @default(cuid())
+  flagId        String
+  environmentId String
+  enabled       Boolean  @default(false)
+  rolloutPct    Int      @default(100) // 0–100
+  defaultValue  String   @default("false")
+  updatedAt     DateTime @updatedAt
+
+  flag        Flag        @relation(fields: [flagId], references: [id], onDelete: Cascade)
+  environment Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+
+  @@unique([flagId, environmentId])
+}
+
+// Targeting rules (e.g. plan = "pro" → true)
+model FlagRule {
+  id         String    @id @default(cuid())
+  flagId     String
+  attribute  String    // e.g. "plan", "country", "userId"
+  operator   Operator  // e.g. EQUALS, NOT_EQUALS, CONTAINS
+  value      String    // e.g. "pro", "US"
+  serveValue String    // what to return when rule matches
+  priority   Int       @default(0)
+  createdAt  DateTime  @default(now())
+
+  flag Flag @relation(fields: [flagId], references: [id], onDelete: Cascade)
+}
+
+// ─── A/B Experiments ──────────────────────────────────────────────────────────
+
+model Experiment {
+  id          String           @id @default(cuid())
+  key         String
+  name        String
+  description String?
+  hypothesis  String?
+  status      ExperimentStatus @default(DRAFT)
+  goalEvent   String
+  projectId   String
+  startedAt   DateTime?
+  endedAt     DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  project  Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  variants Variant[]
+  events   Event[]
+
+  @@unique([projectId, key])
+}
+
+model Variant {
+  id           String @id @default(cuid())
+  experimentId String
+  key          String // e.g. "control", "treatment"
+  name         String
+  weight       Int    @default(50) // 0–100, must sum to 100 across variants
+  description  String?
+
+  experiment   Experiment   @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+  impressions  Event[]      @relation("ImpressionVariant")
+  conversions  Event[]      @relation("ConversionVariant")
+
+  @@unique([experimentId, key])
+}
+
+// ─── Events (impressions + conversions) ──────────────────────────────────────
+
+model Event {
+  id             String    @id @default(cuid())
+  type           EventType
+  experimentId   String
+  variantId      String?
+  userId         String
+  attributes     Json?
+  createdAt      DateTime  @default(now())
+
+  experiment         Experiment @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+  impressionVariant  Variant?   @relation("ImpressionVariant", fields: [variantId], references: [id], map: "Event_impressionVariant_fkey")
+  conversionVariant  Variant?   @relation("ConversionVariant", fields: [variantId], references: [id], map: "Event_conversionVariant_fkey")
+
+  @@index([experimentId, type, createdAt])
+  @@index([userId, experimentId])
+}
+
+// ─── Audit Log ────────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  userId       String?
+  projectId    String?
+  action       String   // e.g. "flag.created", "experiment.started"
+  resourceType String   // "Flag" | "Experiment" | "ApiKey" ...
+  resourceId   String
+  before       Json?
+  after        Json?
+  createdAt    DateTime @default(now())
+
+  user    User?    @relation(fields: [userId], references: [id])
+  project Project? @relation(fields: [projectId], references: [id])
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum Role {
+  ADMIN
+  VIEWER
+}
+
+enum FlagType {
+  BOOLEAN
+  STRING
+  NUMBER
+  JSON
+}
+
+enum Operator {
+  EQUALS
+  NOT_EQUALS
+  CONTAINS
+  NOT_CONTAINS
+  GREATER_THAN
+  LESS_THAN
+}
+
+enum ExperimentStatus {
+  DRAFT
+  RUNNING
+  PAUSED
+  COMPLETED
+}
+
+enum EventType {
+  IMPRESSION
+  CONVERSION
+}
