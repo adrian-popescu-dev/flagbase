@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-
-// Auth for this endpoint comes from API keys (checkpoint 10).
-// For now, auth is skipped so the SDK can call it without a browser session.
-// TODO: replace with API key auth in checkpoint 10.
+import { validateApiKey } from "@/lib/apiKey";
 
 const eventSchema = z.object({
   type: z.enum(["IMPRESSION", "CONVERSION"]),
@@ -16,6 +13,9 @@ const eventSchema = z.object({
 
 // POST /api/events
 export async function POST(req: NextRequest) {
+  const auth = await validateApiKey(req);
+  if (!auth.valid) return NextResponse.json({ error: auth.error }, { status: 401 });
+
   const body = await req.json().catch(() => null);
   if (!body) return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
 

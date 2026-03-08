@@ -3,11 +3,8 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { evaluateFlag } from "@/lib/evaluation";
 import { flagCacheKey, getCachedFlag, setCachedFlag } from "@/lib/redis";
+import { validateApiKey } from "@/lib/apiKey";
 import type { EvalRule, EvalState, FlagType } from "@/lib/evaluation";
-
-// Auth for this endpoint comes from API keys (checkpoint 10).
-// For now, the session check is skipped so the SDK can call it without a browser session.
-// TODO: replace with API key auth in checkpoint 10.
 
 const evaluateSchema = z.object({
   flagKey: z.string().min(1),
@@ -19,6 +16,9 @@ const evaluateSchema = z.object({
 
 // POST /api/evaluate
 export async function POST(req: NextRequest) {
+  const auth = await validateApiKey(req);
+  if (!auth.valid) return NextResponse.json({ error: auth.error }, { status: 401 });
+
   const body = await req.json().catch(() => null);
   if (!body) return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
 
