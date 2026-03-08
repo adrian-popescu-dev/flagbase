@@ -44,7 +44,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
 
   const parsed = updateFlagSchema.safeParse(body);
   if (!parsed.success)
-    return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 });
+    return NextResponse.json({ error: parsed.error.issues }, { status: 400 });
 
   const existing = await prisma.flag.findUnique({ where: { id } });
   if (!existing) return NextResponse.json({ error: "Flag not found" }, { status: 404 });

@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
 
   const parsed = createFlagSchema.safeParse(body);
   if (!parsed.success)
-    return NextResponse.json({ error: parsed.error.flatten().fieldErrors }, { status: 400 });
+    return NextResponse.json({ error: parsed.error.issues }, { status: 400 });
 
   const { projectId, key, name, description, type } = parsed.data;
 
