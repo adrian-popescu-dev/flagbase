@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Field } from "@/components/Field";
+import { Modal } from "@/components/Modal";
 import { createKey, revokeKey } from "./actions";
 
 type ApiKey = {
@@ -152,46 +153,30 @@ function CreateKeyModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-900">
-        <h2 className="mb-4 text-base font-semibold text-zinc-900 dark:text-zinc-50">New API key</h2>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <Modal title="New API key" onClose={onClose}>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <fieldset disabled={isPending} className="flex flex-col gap-4 border-0 p-0 m-0">
           <Field label="Name" name="name" placeholder="Production server" required />
-
           <div className="flex flex-col gap-1">
             <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Environment</label>
-            <select
-              name="environmentId"
-              required
-              className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50"
-            >
+            <select name="environmentId" required className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50">
               {environments.map((env) => (
                 <option key={env.id} value={env.id}>{env.name}</option>
               ))}
             </select>
           </div>
+        </fieldset>
 
-          {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
-          <div className="flex justify-end gap-3 pt-1">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isPending}
-              className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900"
-            >
-              {isPending ? "Creating…" : "Create key"}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        <div className="flex justify-end gap-3 pt-1">
+          <button type="button" onClick={onClose} className="rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800">Cancel</button>
+          <button type="submit" disabled={isPending} className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900">
+            {isPending ? "Creating…" : "Create key"}
+          </button>
+        </div>
+      </form>
+    </Modal>
   );
 }
 
@@ -207,30 +192,19 @@ function NewKeyModal({ rawKey, onClose }: { rawKey: string; onClose: () => void 
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-900">
-        <h2 className="mb-1 text-base font-semibold text-zinc-900 dark:text-zinc-50">Save your API key</h2>
-        <p className="mb-4 text-sm text-zinc-500">
-          This key will only be shown once. Copy it now and store it safely.
-        </p>
-
-        <div className="mb-4 flex items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-800">
-          <code className="flex-1 truncate text-xs text-zinc-700 dark:text-zinc-300">{rawKey}</code>
-          <button
-            onClick={copy}
-            className="text-xs font-medium text-zinc-500 transition hover:text-zinc-900 dark:hover:text-zinc-50"
-          >
-            {copied ? "Copied!" : "Copy"}
-          </button>
-        </div>
-
-        <button
-          onClick={onClose}
-          className="w-full rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-zinc-700 dark:bg-zinc-50 dark:text-zinc-900"
-        >
-          I've saved it
+    <Modal title="Save your API key" onClose={onClose}>
+      <p className="-mt-2 mb-4 text-sm text-zinc-500">
+        This key will only be shown once. Copy it now and store it safely.
+      </p>
+      <div className="mb-4 flex items-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-800">
+        <code className="flex-1 truncate text-xs text-zinc-700 dark:text-zinc-300">{rawKey}</code>
+        <button onClick={copy} className="text-xs font-medium text-zinc-500 transition hover:text-zinc-900 dark:hover:text-zinc-50">
+          {copied ? "Copied!" : "Copy"}
         </button>
       </div>
-    </div>
+      <button onClick={onClose} className="w-full rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-zinc-700 dark:bg-zinc-50 dark:text-zinc-900">
+        I've saved it
+      </button>
+    </Modal>
   );
 }

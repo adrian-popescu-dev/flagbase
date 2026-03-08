@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Field } from "@/components/Field";
+import { Modal } from "@/components/Modal";
 import {
   createFlag,
   toggleFlag,
@@ -115,6 +116,8 @@ export default function FlagsClient({ flags, projectId, environmentId }: Props) 
                         onClick={() => handleToggle(flag.id, enabled)}
                         disabled={isPending || flag.archived}
                         aria-label={enabled ? "Disable flag" : "Enable flag"}
+                        aria-checked={enabled}
+                        role="switch"
                         className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
                           enabled ? "bg-zinc-900 dark:bg-zinc-50" : "bg-zinc-200 dark:bg-zinc-700"
                         }`}
@@ -170,56 +173,35 @@ function CreateFlagModal({ projectId, onClose }: { projectId: string; onClose: (
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-900">
-        <h2 className="mb-4 text-base font-semibold text-zinc-900 dark:text-zinc-50">New flag</h2>
-
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <Field
-            label="Key"
-            name="key"
-            placeholder="my-feature-flag"
-            required
-            hint="Lowercase, alphanumeric, _ or -"
-          />
+    <Modal title="New flag" onClose={onClose}>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <fieldset disabled={isPending} className="flex flex-col gap-4 border-0 p-0 m-0">
+          <Field label="Key" name="key" placeholder="my-feature-flag" required hint="Lowercase, alphanumeric, _ or -" />
           <Field label="Name" name="name" placeholder="My Feature Flag" required />
           <Field label="Description" name="description" placeholder="Optional" />
-
           <div className="flex flex-col gap-1">
             <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Type</label>
-            <select
-              name="type"
-              defaultValue="BOOLEAN"
-              className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50"
-            >
+            <select name="type" defaultValue="BOOLEAN" className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50">
               <option value="BOOLEAN">Boolean</option>
               <option value="STRING">String</option>
               <option value="NUMBER">Number</option>
               <option value="JSON">JSON</option>
             </select>
           </div>
+        </fieldset>
 
-          {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
-          <div className="flex justify-end gap-3 pt-1">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isPending}
-              className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
-            >
-              {isPending ? "Creating…" : "Create flag"}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        <div className="flex justify-end gap-3 pt-1">
+          <button type="button" onClick={onClose} className="rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800">
+            Cancel
+          </button>
+          <button type="submit" disabled={isPending} className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200">
+            {isPending ? "Creating…" : "Create flag"}
+          </button>
+        </div>
+      </form>
+    </Modal>
   );
 }
 

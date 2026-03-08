@@ -1,12 +1,6 @@
-import Link from "next/link";
 import { auth, signOut } from "@/lib/auth";
 import { redirect } from "next/navigation";
-
-const navItems = [
-  { href: "/dashboard/flags", label: "Flags" },
-  { href: "/dashboard/experiments", label: "Experiments" },
-  { href: "/dashboard/settings", label: "Settings" },
-];
+import { NavLinks } from "@/components/NavLinks";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -23,15 +17,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         </div>
 
         <nav className="flex flex-1 flex-col gap-1 p-3">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="rounded-md px-3 py-2 text-sm font-medium text-zinc-600 transition hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-50"
-            >
-              {item.label}
-            </Link>
-          ))}
+          <NavLinks />
         </nav>
 
         <div className="border-t border-zinc-200 p-3 dark:border-zinc-800">

@@ -2,13 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-
-async function requireAuth() {
-  const session = await auth();
-  if (!session) throw new Error("Unauthorized");
-}
+import { requireAuth } from "@/lib/requireAuth";
 
 // ── Create experiment ─────────────────────────────────────────────────────────
 

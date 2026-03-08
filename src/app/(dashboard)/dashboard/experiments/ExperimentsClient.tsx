@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { Field } from "@/components/Field";
+import { Modal } from "@/components/Modal";
 import { createExperiment, updateExperimentStatus, deleteExperiment } from "./actions";
 
 type Status = "DRAFT" | "RUNNING" | "PAUSED" | "COMPLETED";
@@ -197,18 +198,15 @@ function CreateExperimentModal({ projectId, onClose }: { projectId: string; onCl
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-lg rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-900 max-h-[90vh] overflow-y-auto">
-        <h2 className="mb-4 text-base font-semibold text-zinc-900 dark:text-zinc-50">New experiment</h2>
-
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <Modal title="New experiment" onClose={onClose} maxWidth="max-w-lg">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <fieldset disabled={isPending} className="flex flex-col gap-4 border-0 p-0 m-0">
           <Field label="Key" name="key" placeholder="button-color-test" required hint="Lowercase, alphanumeric, _ or -" />
           <Field label="Name" name="name" placeholder="Button Color Test" required />
           <Field label="Goal event" name="goalEvent" placeholder="purchase_completed" required hint="The event name your app will track()" />
           <Field label="Description" name="description" placeholder="Optional" />
           <Field label="Hypothesis" name="hypothesis" placeholder="Optional" />
 
-          {/* Variants */}
           <div>
             <div className="mb-2 flex items-center justify-between">
               <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
@@ -224,59 +222,26 @@ function CreateExperimentModal({ projectId, onClose }: { projectId: string; onCl
             <div className="flex flex-col gap-2">
               {variants.map((v, i) => (
                 <div key={i} className="flex gap-2">
-                  <input
-                    value={v.key}
-                    onChange={(e) => updateVariant(i, "key", e.target.value)}
-                    placeholder="key"
-                    className="w-28 rounded-lg border border-zinc-200 bg-white px-3 py-2 font-mono text-xs outline-none focus:ring-2 ring-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50 dark:ring-zinc-50"
-                  />
-                  <input
-                    value={v.name}
-                    onChange={(e) => updateVariant(i, "name", e.target.value)}
-                    placeholder="name"
-                    className="flex-1 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 ring-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50 dark:ring-zinc-50"
-                  />
-                  <input
-                    type="number"
-                    value={v.weight}
-                    onChange={(e) => updateVariant(i, "weight", parseInt(e.target.value) || 0)}
-                    placeholder="%"
-                    className="w-16 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 ring-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50 dark:ring-zinc-50"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeVariant(i)}
-                    disabled={variants.length <= 2}
-                    className="text-xs text-zinc-400 hover:text-red-500 disabled:opacity-30"
-                  >
-                    ✕
-                  </button>
+                  <input value={v.key} onChange={(e) => updateVariant(i, "key", e.target.value)} placeholder="key" className="w-28 rounded-lg border border-zinc-200 bg-white px-3 py-2 font-mono text-xs outline-none focus:ring-2 ring-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50 dark:ring-zinc-50" />
+                  <input value={v.name} onChange={(e) => updateVariant(i, "name", e.target.value)} placeholder="name" className="flex-1 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 ring-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50 dark:ring-zinc-50" />
+                  <input type="number" value={v.weight} onChange={(e) => updateVariant(i, "weight", parseInt(e.target.value) || 0)} placeholder="%" className="w-16 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 ring-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50 dark:ring-zinc-50" />
+                  <button type="button" onClick={() => removeVariant(i)} disabled={variants.length <= 2} className="text-xs text-zinc-400 hover:text-red-500 disabled:opacity-30">✕</button>
                 </div>
               ))}
             </div>
           </div>
+        </fieldset>
 
-          {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
-          <div className="flex justify-end gap-3 pt-1">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isPending || totalWeight !== 100}
-              className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
-            >
-              {isPending ? "Creating…" : "Create experiment"}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        <div className="flex justify-end gap-3 pt-1">
+          <button type="button" onClick={onClose} className="rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800">Cancel</button>
+          <button type="submit" disabled={isPending || totalWeight !== 100} className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200">
+            {isPending ? "Creating…" : "Create experiment"}
+          </button>
+        </div>
+      </form>
+    </Modal>
   );
 }
 

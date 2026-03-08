@@ -2,14 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-
-async function requireAuth() {
-  const session = await auth();
-  if (!session) throw new Error("Unauthorized");
-  return session;
-}
+import { requireAuth } from "@/lib/requireAuth";
 
 // ── Create flag ───────────────────────────────────────────────────────────────
 
@@ -42,6 +36,9 @@ export async function createFlag(formData: FormData) {
 
 export async function toggleFlag(flagId: string, environmentId: string, enabled: boolean) {
   await requireAuth();
+
+  const flag = await prisma.flag.findUnique({ where: { id: flagId }, select: { archived: true } });
+  if (flag?.archived) throw new Error("Cannot toggle an archived flag");
 
   await prisma.flagState.upsert({
     where: { flagId_environmentId: { flagId, environmentId } },

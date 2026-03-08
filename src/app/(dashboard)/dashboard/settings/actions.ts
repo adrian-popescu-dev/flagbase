@@ -1,14 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { generateApiKey } from "@/lib/apiKey";
-
-async function requireAuth() {
-  const session = await auth();
-  if (!session) throw new Error("Unauthorized");
-}
+import { requireAuth } from "@/lib/requireAuth";
 
 export async function createKey(formData: FormData): Promise<{ key: string }> {
   await requireAuth();
